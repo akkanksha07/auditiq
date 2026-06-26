@@ -1,0 +1,32 @@
+{
+  "retail": {
+    "label": "Retail",
+    "receivablesDays": 18, "inventoryDays": 45, "grossMargin": 0.32, "currentRatio": 1.1,
+    "debtToEquity": 1.4, "interestCoverage": 4.5, "assetTurnover": 1.8, "revenueGrowth": 0.05
+  },
+  "technology": {
+    "label": "Technology",
+    "receivablesDays": 55, "inventoryDays": 30, "grossMargin": 0.58, "currentRatio": 2.2,
+    "debtToEquity": 0.6, "interestCoverage": 12.0, "assetTurnover": 0.7, "revenueGrowth": 0.14
+  },
+  "manufacturing": {
+    "label": "Manufacturing",
+    "receivablesDays": 48, "inventoryDays": 62, "grossMargin": 0.28, "currentRatio": 1.5,
+    "debtToEquity": 0.9, "interestCoverage": 5.5, "assetTurnover": 0.9, "revenueGrowth": 0.04
+  },
+  "financial": {
+    "label": "Financial Services",
+    "receivablesDays": 30, "inventoryDays": 0, "grossMargin": 0.45, "currentRatio": 1.3,
+    "debtToEquity": 3.5, "interestCoverage": 3.0, "assetTurnover": 0.1, "revenueGrowth": 0.07
+  },
+  "healthcare": {
+    "label": "Healthcare",
+    "receivablesDays": 61, "inventoryDays": 40, "grossMargin": 0.52, "currentRatio": 1.8,
+    "debtToEquity": 0.8, "interestCoverage": 8.0, "assetTurnover": 0.6, "revenueGrowth": 0.09
+  },
+  "energy": {
+    "label": "Energy",
+    "receivablesDays": 42, "inventoryDays": 35, "grossMargin": 0.22, "currentRatio": 1.2,
+    "debtToEquity": 1.1, "interestCoverage": 6.5, "assetTurnover": 0.5, "revenueGrowth": 0.03
+  }
+}

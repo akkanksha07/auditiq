@@ -1,0 +1,20 @@
+# Keep the image lean and secret-free
+.venv/
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+.streamlit/secrets.toml
+data/uploads/*
+data/reports/*
+.claude/
+
+# Not needed at runtime
+docs/
+prototype/
+tests/
+*.md

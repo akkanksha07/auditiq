@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuditIQ — AI-Powered Audit Intelligence</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .hero-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: center; max-width: 1080px; margin: 0 auto;
+      padding: 140px 2.5rem 80px;
+    }
+    .hero-left { text-align: left; }
+    .hero-left p { margin: 0 0 2.5rem; }
+    .hero-left .hero-actions { justify-content: flex-start; }
+    .stat-row { display: flex; gap: 2.5rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .stat { }
+    .stat-n { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+    .stat-l { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    @media(max-width:768px){ .hero-grid{grid-template-columns:1fr; padding:120px 1.25rem 60px;} .stat-row{gap:1.5rem;} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="logo-mark">AI</div>
+    AuditIQ
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#beneish">Beneish model</a>
+  </div>
+  <a href="app.html" class="nav-cta">Launch tool →</a>
+</nav>
+
+<div class="hero-grid">
+  <div class="hero-left">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      Built on Beneish M-Score &amp; industry benchmarks
+    </div>
+    <h1>Audit intelligence.<br><em>In seconds.</em></h1>
+    <p>Upload any company's annual report and get a full fraud risk assessment, red flag analysis, and benchmarking against industry peers — powered by the same models real auditors use.</p>
+    <div class="hero-actions">
+      <a href="app.html" class="btn-primary">Try the tool <span>→</span></a>
+      <a href="#how-it-works" class="btn-ghost">See how it works</a>
+    </div>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-n" style="color:var(--accent)">8</div>
+        <div class="stat-l">Beneish indicators</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" style="color:var(--green)">3yr</div>
+        <div class="stat-l">YoY trend analysis</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" style="color:var(--amber)">AI</div>
+        <div class="stat-l">Plain English findings</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <span class="terminal-title">auditiq — analysis output</span>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-label">company     </span><span class="t-val">  Tesco PLC — Annual Report 2023</span></div>
+      <div><span class="t-label">industry    </span><span class="t-val">  Retail (FTSE 100)</span></div>
+      <hr class="t-divider">
+      <div><span class="t-key">beneish_score  </span><span class="t-danger">  -1.84   ⚠ MANIPULATOR</span></div>
+      <div><span class="t-key">fraud_prob     </span><span class="t-danger">  67.3%</span></div>
+      <hr class="t-divider">
+      <div><span class="t-key">DSRI  </span><span class="t-warn">  1.31   </span><span class="t-label">↑ receivables growing faster than revenue</span></div>
+      <div><span class="t-key">GMI   </span><span class="t-warn">  1.18   </span><span class="t-label">↑ gross margin deteriorating</span></div>
+      <div><span class="t-key">AQI   </span><span class="t-ok">  0.94   </span><span class="t-label">✓ within normal range</span></div>
+      <div><span class="t-key">SGI   </span><span class="t-warn">  1.41   </span><span class="t-label">↑ high sales growth → watch revenue recognition</span></div>
+      <hr class="t-divider">
+      <div><span class="t-label">receivables_days  </span><span class="t-danger">  94  </span><span class="t-label">vs industry avg 61</span></div>
+      <div><span class="t-label">interest_coverage </span><span class="t-ok">  4.2x </span><span class="t-label">vs industry avg 3.8x</span></div>
+      <hr class="t-divider">
+      <div><span class="t-ok">■ </span><span class="t-label">3 findings generated — see full report</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features" style="background: var(--navy-2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+      <h2 class="section-title">What a first-year auditor does,<br>in under 30 seconds</h2>
+      <p class="section-sub" style="margin:0">Every feature mirrors a real analytical technique used in external audit and financial due diligence.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Automated red flag detection</h3>
+        <p>Scans annual reports for classic warning signs: unusual accruals, receivables spikes, off-balance sheet items, and sudden policy changes in accounting notes.</p>
+        <div class="feature-tag">Pattern matching</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Industry benchmarking</h3>
+        <p>Compares key ratios against industry averages. Flags deviations with context — not just "receivables days is 94" but "94 vs industry average of 61."</p>
+        <div class="feature-tag">Peer comparison</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Beneish M-Score</h3>
+        <p>Calculates all 8 components of the Beneish model — the same quantitative fraud detection formula used by professional auditors and regulators worldwide.</p>
+        <div class="feature-tag">Fraud probability</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>Year-on-year trend analysis</h3>
+        <p>Upload up to 3 years of reports. Tracks how each indicator evolves — is the company getting riskier? Cleaner? Visualised in interactive charts.</p>
+        <div class="feature-tag">Multi-year</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✍️</div>
+        <h3>Plain English findings</h3>
+        <p>Every red flag comes with a natural language explanation — "Revenue grew 40% but operating cash flow declined, which may indicate aggressive revenue recognition."</p>
+        <div class="feature-tag">AI narrative</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Exportable audit report</h3>
+        <p>Download a structured report you can present to stakeholders. Includes executive summary, findings by risk level, ratio tables, and methodology notes.</p>
+        <div class="feature-tag">PDF export</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-label">Process</div>
+    <h2 class="section-title">From PDF to findings in four steps</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-line"><div class="step-dot"></div><div class="step-dash"></div></div>
+        <div class="step-num">01</div>
+        <h3>Upload the annual report</h3>
+        <p>Drop any publicly available PDF annual report. We extract the financial statements automatically.</p>
+      </div>
+      <div class="step">
+        <div class="step-line"><div class="step-dot"></div><div class="step-dash"></div></div>
+        <div class="step-num">02</div>
+        <h3>Extract key financials</h3>
+        <p>Revenue, EBITDA, receivables, inventory, cash flows, accruals — all pulled from the document with AI.</p>
+      </div>
+      <div class="step">
+        <div class="step-line"><div class="step-dot"></div><div class="step-dash"></div></div>
+        <div class="step-num">03</div>
+        <h3>Score and benchmark</h3>
+        <p>Beneish M-Score computed. Each ratio benchmarked against its sector. Risk thresholds applied.</p>
+      </div>
+      <div class="step">
+        <div class="step-dot"></div>
+        <div class="step-num">04</div>
+        <h3>Review findings</h3>
+        <p>Prioritised findings with severity levels, charts over time, and a plain-English audit summary.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEISH EXPLAINER -->
+<section id="beneish" style="background: var(--navy-2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-label">Methodology</div>
+    <h2 class="section-title">The Beneish M-Score</h2>
+    <p class="section-sub">Developed by Professor Messod Beneish at Indiana University, the M-Score is a mathematical model that uses financial ratios to identify whether a company has manipulated its earnings. A score above −1.78 indicates a likely manipulator.</p>
+    <div class="formula-box">
+      <div class="formula">
+        M = <span>-4.84</span> + <em>0.920</em>×DSRI + <em>0.528</em>×GMI + <em>0.404</em>×AQI + <em>0.892</em>×SGI<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <em>0.115</em>×DEPI − <em>0.172</em>×SGAI + <em>4.679</em>×TATA − <em>0.327</em>×LVGI<br><br>
+        <span class="t-label">DSRI</span>  Days Sales in Receivables Index&nbsp;&nbsp;&nbsp;&nbsp; <span class="t-label">GMI</span>   Gross Margin Index<br>
+        <span class="t-label">AQI</span>   Asset Quality Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="t-label">SGI</span>   Sales Growth Index<br>
+        <span class="t-label">DEPI</span>  Depreciation Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="t-label">SGAI</span>  SGA Expense Index<br>
+        <span class="t-label">TATA</span>  Total Accruals to Total Assets&nbsp;&nbsp;&nbsp; <span class="t-label">LVGI</span>  Leverage Index
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="nav-logo">
+    <div class="logo-mark">AI</div>
+    AuditIQ
+  </div>
+  <p>Built for accounting and finance professionals. Not a substitute for qualified audit advice.</p>
+  <a href="app.html" class="nav-cta">Launch tool →</a>
+</footer>
+
+</body>
+</html>

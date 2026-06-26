@@ -1,0 +1,14 @@
+# One-command run:
+#   docker compose up --build
+# Compose auto-reads a local .env for ${ANTHROPIC_API_KEY} substitution.
+services:
+  auditiq:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AUDITIQ_EXTRACTION_MODEL: ${AUDITIQ_EXTRACTION_MODEL:-claude-sonnet-4-6}
+      AUDITIQ_NARRATIVE_MODEL: ${AUDITIQ_NARRATIVE_MODEL:-claude-sonnet-4-6}
+      AUDITIQ_NEWS_MODEL: ${AUDITIQ_NEWS_MODEL:-claude-sonnet-4-6}
+    restart: unless-stopped
