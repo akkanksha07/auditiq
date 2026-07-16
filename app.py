@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 
 import plotly.graph_objects as go
 import streamlit as st
@@ -20,6 +21,17 @@ try:
             os.environ.setdefault(_k, _v)
 except Exception:
     pass
+
+# Self-heal Streamlit Cloud hot-reloads: after a git-pull update the script re-runs
+# from NEW source while previously imported package modules can stay cached in
+# sys.modules from the OLD process. If the cached auditiq.models predates the
+# forensic layer, purge the package cache so everything re-imports fresh.
+import auditiq.models as _aiq_models_check  # noqa: E402
+
+if not hasattr(_aiq_models_check, "ForensicReview"):
+    for _k in [k for k in list(sys.modules) if k == "auditiq" or k.startswith("auditiq.")]:
+        del sys.modules[_k]
+del _aiq_models_check
 
 from auditiq.analysis.benford import EXPECTED, analyze as benford_analyze
 from auditiq.analysis.benchmark import industries
