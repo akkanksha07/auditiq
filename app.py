@@ -24,12 +24,13 @@ except Exception:
 from auditiq.analysis.benford import EXPECTED, analyze as benford_analyze
 from auditiq.analysis.benchmark import industries
 from auditiq.config import ALTMAN_ZONES, settings
+from auditiq.intelligence.forensic import CATEGORY_LABEL, analyze_disclosures
 from auditiq.intelligence.news import get_news_sentiment
 from auditiq.intelligence.summary import generate_summary
 from auditiq.models import AuditReport, YearAnalysis
 from auditiq.pipeline import build_report
 from auditiq.sample_data import (
-    SAMPLE_INDUSTRY, get_sample_benford_numbers, get_sample_statements,
+    SAMPLE_INDUSTRY, get_sample_benford_numbers, get_sample_forensic, get_sample_statements,
 )
 
 # ─── Palette ──────────────────────────────────────────────────────────────────
@@ -144,7 +145,7 @@ st.markdown(
       .aiq-preview-find .dot { width:7px; height:7px; border-radius:50%; margin-top:5px; flex:none; }
 
       /* Checks strip */
-      .aiq-strip { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid #E6E8EC;
+      .aiq-strip { display:grid; grid-template-columns:repeat(5,1fr); border:1px solid #E6E8EC;
         border-radius:16px; background:#fff; overflow:hidden; box-shadow:0 1px 2px rgba(16,24,40,.04); }
       .aiq-strip .c { padding:20px 22px; border-right:1px solid #F1F2F5; }
       .aiq-strip .c:last-child { border-right:none; }
@@ -204,6 +205,18 @@ st.markdown(
       .aiq-finding .hd { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
       .aiq-finding .ti { font-size:14.5px; color:#0F172A; font-weight:700; letter-spacing:-.01em; }
       .aiq-finding p { margin:0; font-size:13.5px; color:#475467; line-height:1.6; }
+      .aiq-finding .why { margin-top:9px; font-size:13px; color:#475467; line-height:1.55; }
+      .aiq-finding .why b { color:#0F172A; }
+      .aiq-inno { margin-top:9px; background:#F7F8FA; border:1px solid #EEF0F4; border-radius:9px;
+        padding:9px 13px; font-size:12.5px; color:#667085; line-height:1.6; }
+      .aiq-inno b { display:block; color:#475467; font-size:10.5px; text-transform:uppercase;
+        letter-spacing:.06em; margin-bottom:3px; }
+      .aiq-quote { margin:10px 0 0; padding:9px 13px; border-left:3px solid #C7CBD4;
+        background:#F7F8FA; border-radius:0 9px 9px 0; font-size:12.5px; color:#475467;
+        font-style:italic; line-height:1.55; }
+      .aiq-cat { display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.04em;
+        text-transform:uppercase; color:#667085; background:#F2F4F7; border:1px solid #E4E7EC;
+        padding:2px 9px; border-radius:5px; margin-right:8px; vertical-align:middle; }
 
       /* Callouts (replace st alerts) */
       .aiq-callout { display:flex; gap:11px; align-items:flex-start; border-radius:12px;
@@ -317,17 +330,19 @@ def run_analysis(files, industry: str) -> AuditReport:
     from auditiq.extraction.ai_extractor import extract_financials
     from auditiq.extraction.pdf_reader import read_pdf_bytes
 
-    statements, benford_texts = [], {}
+    statements, benford_texts, forensic_text = [], {}, ""
     with st.status("Running forensic analysis…", expanded=True) as status:
         for f in files:
             yr = _guess_year(f.name)
             st.write(f"Reading {f.name}")
-            content = read_pdf_bytes(f.getvalue())
+            # Deep read — the auditor's report and notes often sit far past page 60.
+            content = read_pdf_bytes(f.getvalue(), max_pages=settings.forensic_max_pdf_pages)
             st.write(f"Extracting financials with Claude "
                      f"(scanned {content.scanned_pages} of {content.num_pages} pages)…")
             fs = extract_financials(content.financial_text, year_label=yr)
             statements.append(fs)
             benford_texts[fs.year or yr] = content.full_text
+            forensic_text = content.full_text  # latest file read feeds the disclosure review
 
         st.write("Scoring — Beneish, Altman, Benford, benchmarking…")
         company = next((s.company_name for s in statements if s.company_name), None)
@@ -336,6 +351,8 @@ def run_analysis(files, industry: str) -> AuditReport:
             st.write("Cross-referencing recent news sentiment…")
             news = get_news_sentiment(company)
         report = build_report(statements, industry=industry, benford_texts=benford_texts, news=news)
+        st.write("Reviewing the auditor's report, notes and MD&A for disclosure red flags…")
+        report.forensic = analyze_disclosures(forensic_text, company)
         if report.years:
             st.write("Writing the audit summary…")
             report.summary = generate_summary(report.years[-1], industry)
@@ -347,6 +364,7 @@ def load_sample() -> AuditReport:
     report = build_report(get_sample_statements(), industry=SAMPLE_INDUSTRY)
     if report.years:
         report.years[-1].benford = benford_analyze(get_sample_benford_numbers())
+    report.forensic = get_sample_forensic()
     return report
 
 
@@ -400,7 +418,7 @@ def _preview_card() -> str:
     return (
         '<div class="aiq-preview"><div class="aiq-preview-top">'
         '<div><div class="co">Tesco PLC</div><div class="yr">Annual report · 2023</div></div>'
-        f'{chip("HIGH RISK", RED)}</div>'
+        f'{chip("3 RED FLAGS", RED)}</div>'
         '<div class="aiq-preview-scores">'
         f'<div class="s"><div class="l">Beneish M-Score</div><div class="v aiq-num" style="color:{RED}">−1.84</div>'
         '<div class="t">Manipulator zone</div></div>'
@@ -420,9 +438,10 @@ def upload_view(industry: str) -> None:
         st.markdown(
             f'<div class="aiq-eyebrow">{icon("search", 14, "#6366F1")} AI-powered forensic screening</div>'
             '<div class="aiq-h1">Read the numbers<br>behind the numbers.</div>'
-            '<div class="aiq-lead">Upload an annual report and AuditIQ scores it for earnings '
-            'manipulation, bankruptcy risk, and manipulated figures — then benchmarks it against '
-            'the sector, in seconds.</div>', unsafe_allow_html=True)
+            '<div class="aiq-lead">Upload an annual report and AuditIQ screens it for earnings '
+            "manipulation, bankruptcy risk and digit anomalies — then reads the auditor's report "
+            'and notes for disclosure red flags. Indicators to investigate, never verdicts.</div>',
+            unsafe_allow_html=True)
         files = st.file_uploader("Annual report PDFs — up to 3 years", type="pdf",
                                  accept_multiple_files=True)
         disabled = not settings.has_api_key
@@ -446,10 +465,11 @@ def upload_view(industry: str) -> None:
 
     st.markdown('<hr class="aiq-rule">', unsafe_allow_html=True)
     checks = [
-        ("target", "Beneish M-Score", "Earnings manipulation"),
-        ("activity", "Altman Z-Score", "Bankruptcy risk"),
-        ("hash", "Benford's Law", "Manipulated figures"),
+        ("target", "Beneish M-Score", "Earnings-manipulation screen"),
+        ("activity", "Altman Z-Score", "Bankruptcy-risk screen"),
+        ("hash", "Benford's Law", "Digit-anomaly screen"),
         ("bars", "Benchmarking", "Ratios vs the sector"),
+        ("file", "Disclosure review", "Auditor's report & notes"),
     ]
     cells = "".join(
         f'<div class="c"><div class="ic">{icon(ic, 19)}</div><div class="t">{t}</div>'
@@ -506,11 +526,22 @@ def render_guide() -> None:
             "- **Debt / equity** — leverage; higher than the sector = more financial risk.\n"
             "- **Interest coverage** — profit ÷ interest; **below ~2×** = debt-service strain.\n"
             "- **Asset turnover** — sales per £ of assets; low vs peers = inefficiency.")
-    with st.expander("How the overall risk rating is decided"):
+    with st.expander("The disclosure review — reading the report's own words"):
         st.markdown(
-            "Every check contributes **findings**, each rated *low / medium / high*. The headline "
-            "**risk rating** is the worst finding present. Benchmark deviations are graded against the "
-            "selected industry, so a value always appears in context (e.g. *94 days vs a sector average of 61*).")
+            "**What it is.** Claude reads the independent auditor's report, key audit matters, "
+            "the notes, and management's discussion, and surfaces the disclosure red flags "
+            "forensic accountants check first: going-concern language, restatements, "
+            "internal-control weaknesses, auditor or CFO changes, related-party transactions, "
+            "revenue-recognition changes, and heavy reliance on adjusted (non-GAAP) measures.\n\n"
+            "**How to read it.** Every flag carries a **verbatim quote** from the report — "
+            "verify it against the source. These are leads for investigation, not conclusions.")
+    with st.expander("How the headline screening result is decided"):
+        st.markdown(
+            "Every check contributes **red flags**, each rated *low / medium / high*. The headline "
+            "is a **count of flags to investigate**, coloured by the worst severity present — a "
+            "screening summary, not a verdict. Benchmark deviations are graded against the "
+            "selected industry, so a value always appears in context (e.g. *94 days vs a sector "
+            "average of 61*).")
     st.caption("AuditIQ is an analytical screening tool, not a substitute for qualified audit advice. "
                "All scores are model estimates and must be reviewed by a professional.")
 
@@ -518,20 +549,24 @@ def render_guide() -> None:
 # ─── Dashboard ────────────────────────────────────────────────────────────────
 def _verdict_card(report: AuditReport, year: YearAnalysis) -> str:
     risk = report.overall_risk
-    color = RISK_COLOR[risk]
-    n = len(year.findings)
+    quant = [f for f in year.findings if f.category != "clear"]
+    disc = report.forensic.flags if report.forensic else []
+    total = len(quant) + len(disc)
+    color = RISK_COLOR[risk] if total else GREEN
+    headline = (f"{total} red flag{'s' if total != 1 else ''} to investigate"
+                if total else "No red flags raised")
     summary = (report.summary or "").strip()
     if not summary:
-        tops = [f.title for f in year.findings if f.level == "high"][:2] or [f.title for f in year.findings][:2]
+        tops = [f.title for f in quant if f.level == "high"][:2] or [f.title for f in quant][:2]
         lead = "; ".join(tops)
-        summary = (f"AuditIQ raised {n} finding{'s' if n != 1 else ''} for {year.year}. "
-                   f"Most significant: {lead}." if lead
-                   else f"No material red flags detected for {year.year}.")
-    return (f'<div class="aiq-verdict"><div class="eb">Overall assessment</div>'
-            f'<div class="risk" style="color:{color}">{RISK_TEXT[risk]}</div>'
+        summary = (f"The quantitative screens raised {len(quant)} flag{'s' if len(quant) != 1 else ''} "
+                   f"and the disclosure review {len(disc)} for {year.year}. Start with: {lead}."
+                   if lead else f"No screening thresholds were breached for {year.year}.")
+    return (f'<div class="aiq-verdict"><div class="eb">Screening result</div>'
+            f'<div class="risk" style="color:{color}">{headline}</div>'
             f'<div class="sum">{summary}</div>'
-            f'<div class="meta">{n} finding{"s" if n != 1 else ""} · {report.industry.title()} · '
-            f'{", ".join(y.year for y in report.years)}</div></div>')
+            f'<div class="meta">{len(quant)} quantitative · {len(disc)} disclosure · '
+            f'{report.industry.title()} · {", ".join(y.year for y in report.years)}</div></div>')
 
 
 def _score_card(label: str, value: str, sub: str, color: str) -> str:
@@ -547,14 +582,62 @@ def _metric_sm(label: str, value: str, sub: str, color: str) -> str:
 
 
 def findings_tab(year: YearAnalysis) -> None:
-    section("Findings", f"{len(year.findings)} raised for {year.year}, most severe first.")
+    section("Quantitative red flags",
+            f"{len(year.findings)} raised for {year.year}, most severe first — each is a screen "
+            f"to investigate, not a conclusion.")
     for f in year.findings:
         bg, fg, bd = SOFT[RISK_COLOR[f.level]]
+        why = f'<div class="why"><b>Why it flagged.</b> {f.why}</div>' if f.why else ""
+        inno = ""
+        if f.innocent:
+            items = "".join(f"<div>– {i}</div>" for i in f.innocent)
+            inno = f'<div class="aiq-inno"><b>Common innocent explanations</b>{items}</div>'
         st.markdown(
             f'<div class="aiq-finding" style="border-left-color:{RISK_COLOR[f.level]}">'
             f'<div class="hd"><span class="ti">{f.title}</span>'
             f'<span class="aiq-chip" style="background:{bg};color:{fg};border:1px solid {bd}">'
-            f'{f.level.upper()}</span></div><p>{f.body}</p></div>', unsafe_allow_html=True)
+            f'{f.level.upper()}</span></div><p>{f.body}</p>{why}{inno}</div>',
+            unsafe_allow_html=True)
+
+
+def forensic_tab(report: AuditReport) -> None:
+    fr = report.forensic
+    if fr is None:
+        callout("The disclosure review reads the auditor's report, key audit matters, notes and "
+                "MD&A from an uploaded PDF. It requires the Claude API — upload a report with an "
+                "API key configured. (Demo mode shows an illustrative sample.)", "info")
+        return
+    section("Disclosure-level red flags",
+            "What the report's own words say — auditor's report, key audit matters, notes and "
+            "MD&A. Every flag carries a verbatim quote so it can be verified against the source.")
+    if fr.summary:
+        callout(fr.summary, "info")
+    if fr.sections_reviewed:
+        st.caption("Sections located: " + " · ".join(fr.sections_reviewed))
+    if not fr.flags:
+        callout("No disclosure-level red flags were identified in the sections reviewed. "
+                "A clean disclosure read is a good sign — not a guarantee.", "good")
+        return
+    for fl in fr.flags:
+        base = RISK_COLOR[fl.severity]
+        bg, fg, bd = SOFT[base]
+        quote = f'<div class="aiq-quote">“{fl.evidence}”</div>' if fl.evidence else ""
+        loc = (f' <span style="color:#98A2B3;font-size:11.5px">({fl.location})</span>'
+               if fl.location else "")
+        why = f'<div class="why"><b>Why it matters.</b> {fl.why}</div>' if fl.why else ""
+        inno = ""
+        if fl.innocent:
+            items = "".join(f"<div>– {i}</div>" for i in fl.innocent)
+            inno = f'<div class="aiq-inno"><b>Common innocent explanations</b>{items}</div>'
+        st.markdown(
+            f'<div class="aiq-finding" style="border-left-color:{base}">'
+            f'<div class="hd"><span class="ti"><span class="aiq-cat">'
+            f'{CATEGORY_LABEL.get(fl.category, fl.category)}</span>{fl.title}{loc}</span>'
+            f'<span class="aiq-chip" style="background:{bg};color:{fg};border:1px solid {bd}">'
+            f'{fl.severity.upper()}</span></div>'
+            f'<p>{fl.detail}</p>{quote}{why}{inno}</div>', unsafe_allow_html=True)
+    st.caption("Automated read of the report's disclosures — verify each quote against the "
+               "source document before relying on it.")
 
 
 def beneish_tab(year: YearAnalysis) -> None:
@@ -754,6 +837,9 @@ def results_view(report: AuditReport) -> None:
             sel = yrs[0]
     year = next(y for y in report.years if y.year == sel)
     st.markdown('<hr class="aiq-rule">', unsafe_allow_html=True)
+    callout("Automated screening on published, audited figures — these are red flags "
+            "warranting investigation, not conclusions of manipulation or fraud.", "info")
+    spacer(8)
 
     # Bento verdict band
     v1, v2 = st.columns([1.7, 1], gap="medium")
@@ -762,10 +848,11 @@ def results_view(report: AuditReport) -> None:
     with v2:
         b, a = year.beneish, year.altman
         st.markdown(_score_card("Beneish M-Score", f"{b.m_score}" if b else "—",
-                                ("Manipulator zone" if b.is_manipulator else "Non-manipulator")
+                                ("Above screening threshold — flag raised" if b.is_manipulator
+                                 else "Below screening threshold")
                                 if b else "Needs 2 years", _beneish_color(b)), unsafe_allow_html=True)
         st.markdown(_score_card("Altman Z-Score", f"{a.z_score}" if a else "—",
-                                f"{a.zone_label} zone" if a else "Insufficient data",
+                                f"{a.zone_label} zone (screen)" if a else "Insufficient data",
                                 RISK_COLOR[a.zone] if a else MUTED), unsafe_allow_html=True)
 
     spacer(14)
@@ -776,8 +863,9 @@ def results_view(report: AuditReport) -> None:
     cr_c = RED if cr is not None and cr < 1 else AMBER if cr is not None and cr < 1.5 else GREEN
     rd_c = RED if rd is not None and rd > 90 else AMBER if rd is not None and rd > 60 else GREEN
     m = st.columns(4)
-    m[0].markdown(_metric_sm("Fraud probability", f"{b.probability}%" if b else "—",
-                             "Probit-implied", _beneish_color(b)), unsafe_allow_html=True)
+    m[0].markdown(_metric_sm("Manipulation screen", f"{b.probability}%" if b else "—",
+                             "Probit score — not a fraud probability", _beneish_color(b)),
+                  unsafe_allow_html=True)
     m[1].markdown(_metric_sm("Gross margin", f"{gm*100:.1f}%" if gm is not None else "—",
                              "Profitability", gm_c), unsafe_allow_html=True)
     m[2].markdown(_metric_sm("Current ratio", f"{cr}x" if cr is not None else "—",
@@ -786,25 +874,27 @@ def results_view(report: AuditReport) -> None:
                              "Collection speed", rd_c), unsafe_allow_html=True)
 
     spacer(16)
-    tabs = st.tabs(["Findings", "Beneish", "Benford", "Altman", "Benchmarking",
-                    "Trends", "News", "Report", "How it works"])
+    tabs = st.tabs(["Findings", "Forensic review", "Beneish", "Benford", "Altman",
+                    "Benchmarking", "Trends", "News", "Report", "How it works"])
     with tabs[0]:
         findings_tab(year)
     with tabs[1]:
-        beneish_tab(year)
+        forensic_tab(report)
     with tabs[2]:
-        benford_tab(year)
+        beneish_tab(year)
     with tabs[3]:
-        altman_tab(year)
+        benford_tab(year)
     with tabs[4]:
-        benchmark_tab(year)
+        altman_tab(year)
     with tabs[5]:
-        trends_tab(report)
+        benchmark_tab(year)
     with tabs[6]:
-        news_tab(report)
+        trends_tab(report)
     with tabs[7]:
-        report_tab(report)
+        news_tab(report)
     with tabs[8]:
+        report_tab(report)
+    with tabs[9]:
         render_guide()
 
 

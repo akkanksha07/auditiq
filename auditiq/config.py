@@ -28,7 +28,12 @@ class Settings:
     extraction_model: str = os.getenv("AUDITIQ_EXTRACTION_MODEL", "claude-sonnet-4-6")
     narrative_model: str = os.getenv("AUDITIQ_NARRATIVE_MODEL", "claude-sonnet-4-6")
     news_model: str = os.getenv("AUDITIQ_NEWS_MODEL", "claude-sonnet-4-6")
+    forensic_model: str = os.getenv("AUDITIQ_FORENSIC_MODEL",
+                                    os.getenv("AUDITIQ_NARRATIVE_MODEL", "claude-sonnet-4-6"))
     max_pdf_pages: int = int(os.getenv("AUDITIQ_MAX_PDF_PAGES", "60"))
+    # Deeper read for the disclosure review — the auditor's report and notes often
+    # sit far beyond the primary statements.
+    forensic_max_pdf_pages: int = int(os.getenv("AUDITIQ_FORENSIC_MAX_PAGES", "150"))
 
     @property
     def has_api_key(self) -> bool:

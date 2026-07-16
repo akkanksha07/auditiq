@@ -5,6 +5,7 @@ import io
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
+from xml.sax.saxutils import escape as _esc
 
 import matplotlib
 
@@ -33,7 +34,8 @@ LIGHT = colors.HexColor("#eef2f9")
 WHITE = colors.white
 
 RISK_COLOR = {"low": GREEN, "medium": AMBER, "high": RED}
-RISK_LABEL = {"low": "LOW RISK", "medium": "ELEVATED RISK", "high": "HIGH RISK"}
+RISK_LABEL = {"low": "NO MAJOR FLAGS", "medium": "FLAGS RAISED — MONITOR",
+              "high": "RED FLAGS — INVESTIGATE"}
 FLAG_COLOR = {"ok": GREEN, "medium": AMBER, "high": RED}
 LEVEL_COLOR = {"low": GREEN, "medium": AMBER, "high": RED}
 
@@ -55,6 +57,8 @@ def _styles():
     ss.add(ParagraphStyle("Small", parent=ss["Normal"], fontSize=8, leading=11, textColor=GREY))
     ss.add(ParagraphStyle("FindTitle", parent=ss["Normal"], fontSize=10, leading=13,
                           textColor=NAVY, fontName="Helvetica-Bold"))
+    ss.add(ParagraphStyle("Quote", parent=ss["Normal"], fontSize=8.5, leading=12,
+                          textColor=GREY, leftIndent=6, fontName="Helvetica-Oblique"))
     return ss
 
 
@@ -151,8 +155,10 @@ def _metrics(year: YearAnalysis, ss) -> list:
     rows = [["Metric", "Value", "Read"]]
     if b:
         rows.append(["Beneish M-Score", f"{b.m_score}",
-                     "Manipulator zone" if b.is_manipulator else "Non-manipulator"])
-        rows.append(["Fraud probability (probit)", f"{b.probability}%", ""])
+                     "Above screening threshold — flag raised" if b.is_manipulator
+                     else "Below screening threshold"])
+        rows.append(["Manipulation screen (probit)", f"{b.probability}%",
+                     "Screening score — not a fraud probability"])
     if a:
         rows.append(["Altman Z-Score", f"{a.z_score} ({a.model_used})", a.zone_label])
     if r.gross_margin is not None:
@@ -174,7 +180,9 @@ def _metrics(year: YearAnalysis, ss) -> list:
 
 
 def _findings(year: YearAnalysis, ss) -> list:
-    out = [Paragraph(f"Findings — {year.year}", ss["H2"])]
+    out = [Paragraph(f"Quantitative Red Flags — {year.year}", ss["H2"]),
+           Paragraph("Screening flags warranting investigation — not conclusions of "
+                     "manipulation or fraud.", ss["Small"])]
     for f in year.findings:
         chip = Table([[Paragraph(f"<b>{f.level.upper()}</b>", ParagraphStyle(
             "lvl", textColor=WHITE, fontSize=7, alignment=TA_CENTER))]], colWidths=[20 * mm])
@@ -182,6 +190,46 @@ def _findings(year: YearAnalysis, ss) -> list:
                                   ("TOPPADDING", (0, 0), (-1, -1), 2),
                                   ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
         body = [Paragraph(f.title, ss["FindTitle"]), Paragraph(f.body, ss["Body"])]
+        if f.why:
+            body.append(Paragraph(f"<b>Why it flagged:</b> {_esc(f.why)}", ss["Body"]))
+        if f.innocent:
+            body.append(Paragraph("<b>Common innocent explanations:</b> "
+                                  + " • ".join(_esc(i) for i in f.innocent), ss["Small"]))
+        row = Table([[chip, body]], colWidths=[24 * mm, _CONTENT_W - 24 * mm])
+        row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
+        out.append(row)
+    return out
+
+
+def _forensic(report: AuditReport, ss) -> list:
+    fr = report.forensic
+    if not fr or not fr.flags:
+        return []
+    from ..intelligence.forensic import CATEGORY_LABEL
+    out = [Paragraph("Forensic Review — Disclosure Red Flags", ss["H2"]),
+           Paragraph("From the auditor's report, key audit matters, notes and MD&amp;A. "
+                     "Each flag carries a verbatim quote — verify it against the source "
+                     "document before relying on it.", ss["Small"])]
+    if fr.summary:
+        out.append(Paragraph(_esc(fr.summary), ss["Body"]))
+    for fl in fr.flags:
+        chip = Table([[Paragraph(f"<b>{fl.severity.upper()}</b>", ParagraphStyle(
+            "dlvl", textColor=WHITE, fontSize=7, alignment=TA_CENTER))]], colWidths=[20 * mm])
+        chip.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), LEVEL_COLOR[fl.severity]),
+                                  ("TOPPADDING", (0, 0), (-1, -1), 2),
+                                  ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
+        cat = CATEGORY_LABEL.get(fl.category, fl.category)
+        body = [Paragraph(f"{_esc(cat)}: {_esc(fl.title)}", ss["FindTitle"]),
+                Paragraph(_esc(fl.detail), ss["Body"])]
+        if fl.evidence:
+            loc = f" ({_esc(fl.location)})" if fl.location else ""
+            body.append(Paragraph(f'Evidence: "{_esc(fl.evidence)}"{loc}', ss["Quote"]))
+        if fl.why:
+            body.append(Paragraph(f"<b>Why it matters:</b> {_esc(fl.why)}", ss["Body"]))
+        if fl.innocent:
+            body.append(Paragraph("<b>Common innocent explanations:</b> "
+                                  + " • ".join(_esc(i) for i in fl.innocent), ss["Small"]))
         row = Table([[chip, body]], colWidths=[24 * mm, _CONTENT_W - 24 * mm])
         row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"),
                                  ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
@@ -247,13 +295,15 @@ def _news(report: AuditReport, ss) -> list:
 
 def _methodology(ss) -> list:
     txt = (
-        "<b>Beneish M-Score</b> — eight-factor probit model of earnings manipulation; "
-        "scores above -1.78 indicate likely manipulation. "
-        "<b>Altman Z-Score</b> — distress model (original / private / emerging-market variants) "
+        "<b>Beneish M-Score</b> — eight-factor probit screening model; scores above -1.78 "
+        "raise a flag for investigation (high false-positive rate at real-world fraud base rates). "
+        "<b>Altman Z-Score</b> — distress screen (original / private / emerging-market variants) "
         "classifying solvency into safe, grey and distress zones. "
-        "<b>Benford's Law</b> — first-digit distribution test; large deviations (MAD / chi-square) "
-        "can indicate fabricated or rounded figures. "
-        "<b>Benchmarking</b> — ratios compared against sector averages with severity flags."
+        "<b>Benford's Law</b> — first-digit distribution test; on published, aggregated accounts "
+        "deviations are weak signals and are reported with their innocent explanations. "
+        "<b>Benchmarking</b> — ratios compared against sector averages with severity flags. "
+        "<b>Disclosure review</b> — an AI read of the auditor's report, key audit matters, notes "
+        "and MD&amp;A, restricted to flags supported by verbatim quotes from the text."
     )
     return [PageBreak(), Paragraph("Methodology", ss["H2"]),
             HRFlowable(width="100%", thickness=0.6, color=LIGHT),
@@ -272,6 +322,7 @@ def _build_story(report: AuditReport, ss) -> list:
     if latest:
         story += [Spacer(1, 8)] + _metrics(latest, ss)
         story += [Spacer(1, 6)] + _findings(latest, ss)
+        story += [Spacer(1, 6)] + _forensic(report, ss)
         story += [PageBreak()] + _beneish_table(latest, ss)
         if latest.benford and latest.benford.n:
             story += [Spacer(1, 8), Paragraph("Benford's Law Analysis", ss["H2"]),

@@ -143,6 +143,8 @@ class Finding(BaseModel):
     title: str
     body: str
     icon: str = "•"
+    why: str = ""                     # plain-English: what specifically tripped this screen
+    innocent: list[str] = Field(default_factory=list)  # common benign explanations
 
 
 class NewsArticle(BaseModel):
@@ -161,6 +163,35 @@ class NewsSentiment(BaseModel):
     summary: str
     articles: list[NewsArticle] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)  # governance/fraud signals from news
+    as_of: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+
+
+# ─── Qualitative forensic review (disclosures) ────────────────────────────────
+class DisclosureFlag(BaseModel):
+    """A qualitative red flag surfaced from the report's own disclosures."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    category: str                     # going_concern | restatement | icfr_weakness | auditor_change
+    #                                 # | management_change | related_party | revenue_recognition
+    #                                 # | non_gaap | other
+    severity: RiskLevel = "medium"
+    title: str = ""
+    detail: str = ""                  # what the report actually says, in plain English
+    evidence: Optional[str] = None    # short VERBATIM quote from the report (the credibility anchor)
+    location: Optional[str] = None    # section / page hint if identifiable
+    why: str = ""                     # why a forensic accountant cares
+    innocent: list[str] = Field(default_factory=list)
+
+
+class ForensicReview(BaseModel):
+    """Claude's read of the auditor's report, KAMs/CAMs, notes and MD&A."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    flags: list[DisclosureFlag] = Field(default_factory=list)
+    summary: str = ""
+    sections_reviewed: list[str] = Field(default_factory=list)
     as_of: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
 
 
@@ -197,6 +228,7 @@ class AuditReport(BaseModel):
     years: list[YearAnalysis] = Field(default_factory=list)
     comparison: Optional[Comparison] = None
     news: Optional[NewsSentiment] = None
+    forensic: Optional[ForensicReview] = None   # disclosure-level review (auditor's report, notes, MD&A)
     summary: str = ""                 # AI narrative audit summary
     overall_risk: RiskLevel = "low"
     generated_at: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M"))
