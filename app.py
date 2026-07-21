@@ -303,17 +303,21 @@ def spacer(px: int) -> None:
 
 def style_fig(fig: go.Figure, height: int = 320, title: str | None = None,
               showlegend: bool | None = None) -> go.Figure:
+    has_legend = showlegend is not False
     layout = dict(
         height=height, template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font=dict(color=BODY, family="Satoshi, system-ui, sans-serif", size=12),
-        margin=dict(l=8, r=8, t=46 if title else 14, b=8), colorway=CAT,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0, xanchor="left",
+        # legend sits BELOW the plot so it never collides with the title
+        margin=dict(l=8, r=8, t=44 if title else 14, b=54 if has_legend else 14),
+        colorway=CAT,
+        legend=dict(orientation="h", yanchor="top", y=-0.24, x=0, xanchor="left",
                     font=dict(size=11, color=BODY), bgcolor="rgba(0,0,0,0)"),
         hoverlabel=dict(bgcolor="#FFFFFF", bordercolor=HAIR, font=dict(color=INK, size=12)),
     )
     if title:
-        layout["title"] = dict(text=title, font=dict(size=14.5, color=INK), x=0, xanchor="left")
+        layout["title"] = dict(text=title, font=dict(size=14.5, color=INK),
+                               x=0, xanchor="left", y=0.97, yanchor="top")
     if showlegend is not None:
         layout["showlegend"] = showlegend
     fig.update_layout(**layout)
