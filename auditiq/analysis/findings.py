@@ -16,6 +16,7 @@ from ..models import (
 )
 from . import explanations as ex
 from .beneish import elevated_components
+from .scoring import finding_tier
 
 
 def _fmt(v: Optional[float]) -> str:
@@ -118,6 +119,8 @@ def build_findings(
             why="All quantitative screens returned values inside their normal ranges.",
         ))
 
+    for f in findings:                       # tag forensic signal strength
+        f.tier = finding_tier(f.category)
     return findings
 
 

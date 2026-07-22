@@ -1,0 +1,94 @@
+{
+  "caveats": [
+    "Illustrative figures compiled and rounded from public annual reports — for demonstrating the methodology, not audit-grade data.",
+    "Figures reflect the ORIGINALLY REPORTED numbers (in the fraud cases, the manipulated ones) that the screens would actually have seen at the time.",
+    "Benford's Law is excluded from the back-test: it needs transaction-level data that is not available per company.",
+    "A small, non-held-out set of well-known cases — treat the metrics as indicative of behaviour and false-positive profile, not as a rigorous academic study."
+  ],
+  "cases": [
+    {
+      "company": "Enron", "sector": "energy", "label": "manipulator", "year": "2000",
+      "note": "Off-balance-sheet SPEs + mark-to-market; reported revenue exploded.",
+      "prior":   {"revenue": 40112, "cogs": 34761, "ebit": 1995, "netIncome": 893, "depreciation": 870, "sga": 3184, "interestExpense": 656, "operatingCashFlow": 1228, "totalAssets": 33381, "currentAssets": 7255, "ppe": 10681, "receivables": 3030, "inventory": 598, "currentLiabilities": 6759, "totalLiabilities": 23811, "totalDebt": 8152, "equity": 9570, "retainedEarnings": 2698, "marketValueEquity": 35000},
+      "current": {"revenue": 100789, "cogs": 94517, "ebit": 2482, "netIncome": 979, "depreciation": 855, "sga": 3184, "interestExpense": 838, "operatingCashFlow": 900, "totalAssets": 65503, "currentAssets": 30381, "ppe": 11743, "receivables": 10396, "inventory": 953, "currentLiabilities": 28406, "totalLiabilities": 54033, "totalDebt": 10229, "equity": 11470, "retainedEarnings": 3226, "marketValueEquity": 60000}
+    },
+    {
+      "company": "WorldCom", "sector": "technology", "label": "manipulator", "year": "2001",
+      "note": "Line costs capitalised into PP&E, inflating assets and profit.",
+      "prior":   {"revenue": 39090, "cogs": 22800, "ebit": 7900, "netIncome": 4090, "depreciation": 4700, "sga": 8200, "interestExpense": 1000, "operatingCashFlow": 7660, "totalAssets": 98903, "currentAssets": 9500, "ppe": 38809, "receivables": 6815, "inventory": 0, "currentLiabilities": 21000, "totalLiabilities": 47000, "totalDebt": 20000, "equity": 51903, "retainedEarnings": 5000, "marketValueEquity": 120000},
+      "current": {"revenue": 35179, "cogs": 19700, "ebit": 5000, "netIncome": 1384, "depreciation": 5900, "sga": 8300, "interestExpense": 1500, "operatingCashFlow": 7994, "totalAssets": 103914, "currentAssets": 9000, "ppe": 44100, "receivables": 5308, "inventory": 0, "currentLiabilities": 24000, "totalLiabilities": 52000, "totalDebt": 30000, "equity": 51914, "retainedEarnings": 6000, "marketValueEquity": 30000}
+    },
+    {
+      "company": "Wirecard", "sector": "technology", "label": "manipulator", "year": "2018",
+      "note": "Fabricated cash in escrow + fake third-party revenue; ratios looked healthy.",
+      "prior":   {"revenue": 1490, "cogs": 900, "ebit": 413, "netIncome": 260, "depreciation": 90, "sga": 300, "interestExpense": 20, "operatingCashFlow": 340, "totalAssets": 4500, "currentAssets": 2600, "ppe": 300, "receivables": 700, "inventory": 50, "currentLiabilities": 1200, "totalLiabilities": 2100, "totalDebt": 400, "equity": 2400, "retainedEarnings": 900, "marketValueEquity": 11000},
+      "current": {"revenue": 2016, "cogs": 1200, "ebit": 560, "netIncome": 347, "depreciation": 130, "sga": 400, "interestExpense": 25, "operatingCashFlow": 460, "totalAssets": 5900, "currentAssets": 3400, "ppe": 400, "receivables": 900, "inventory": 60, "currentLiabilities": 1500, "totalLiabilities": 2700, "totalDebt": 500, "equity": 3200, "retainedEarnings": 1200, "marketValueEquity": 20000}
+    },
+    {
+      "company": "Luckin Coffee", "sector": "retail", "label": "manipulator", "year": "2019",
+      "note": "Fabricated sales; revenue exploded while cash burned.",
+      "prior":   {"revenue": 120, "cogs": 200, "ebit": -160, "netIncome": -160, "depreciation": 20, "sga": 90, "interestExpense": 5, "operatingCashFlow": -130, "totalAssets": 340, "currentAssets": 250, "ppe": 70, "receivables": 8, "inventory": 30, "currentLiabilities": 90, "totalLiabilities": 120, "totalDebt": 10, "equity": 220, "retainedEarnings": -160, "marketValueEquity": 0},
+      "current": {"revenue": 720, "cogs": 620, "ebit": -180, "netIncome": -170, "depreciation": 60, "sga": 300, "interestExpense": 8, "operatingCashFlow": -160, "totalAssets": 1600, "currentAssets": 1200, "ppe": 300, "receivables": 25, "inventory": 90, "currentLiabilities": 250, "totalLiabilities": 400, "totalDebt": 20, "equity": 1200, "retainedEarnings": -330, "marketValueEquity": 5000}
+    },
+    {
+      "company": "Carillion", "sector": "manufacturing", "label": "manipulator", "year": "2016",
+      "note": "Aggressive contract revenue, goodwill, negative real cash flow, high leverage.",
+      "prior":   {"revenue": 4587, "cogs": 4100, "ebit": 250, "netIncome": 155, "depreciation": 40, "sga": 200, "interestExpense": 45, "operatingCashFlow": 115, "totalAssets": 3400, "currentAssets": 1700, "ppe": 150, "receivables": 1100, "inventory": 200, "currentLiabilities": 2000, "totalLiabilities": 2900, "totalDebt": 400, "equity": 500, "retainedEarnings": 300, "marketValueEquity": 1500},
+      "current": {"revenue": 5214, "cogs": 4750, "ebit": 200, "netIncome": 130, "depreciation": 45, "sga": 250, "interestExpense": 55, "operatingCashFlow": 73, "totalAssets": 3500, "currentAssets": 1800, "ppe": 155, "receivables": 1300, "inventory": 210, "currentLiabilities": 2100, "totalLiabilities": 3050, "totalDebt": 500, "equity": 450, "retainedEarnings": 350, "marketValueEquity": 900}
+    },
+    {
+      "company": "Tesco", "sector": "retail", "label": "manipulator", "year": "2014",
+      "note": "Commercial income pulled forward — overstatement small vs revenue base.",
+      "prior":   {"revenue": 64826, "cogs": 60164, "ebit": 2188, "netIncome": 120, "depreciation": 1800, "sga": 1500, "interestExpense": 517, "operatingCashFlow": 3820, "totalAssets": 50129, "currentAssets": 13096, "ppe": 24490, "receivables": 2525, "inventory": 3744, "currentLiabilities": 18985, "totalLiabilities": 33313, "totalDebt": 10600, "equity": 16661, "retainedEarnings": 12000, "marketValueEquity": 30000},
+      "current": {"revenue": 63557, "cogs": 59547, "ebit": 2631, "netIncome": 970, "depreciation": 1900, "sga": 1400, "interestExpense": 463, "operatingCashFlow": 3412, "totalAssets": 50164, "currentAssets": 13085, "ppe": 24363, "receivables": 2190, "inventory": 3576, "currentLiabilities": 18613, "totalLiabilities": 35442, "totalDebt": 11800, "equity": 14722, "retainedEarnings": 11500, "marketValueEquity": 26000}
+    },
+    {
+      "company": "Steinhoff", "sector": "retail", "label": "manipulator", "year": "2016",
+      "note": "Fictitious revenue and inflated assets through related parties.",
+      "prior":   {"revenue": 12800, "cogs": 8000, "ebit": 1500, "netIncome": 1100, "depreciation": 300, "sga": 3000, "interestExpense": 250, "operatingCashFlow": 900, "totalAssets": 28000, "currentAssets": 9000, "ppe": 5000, "receivables": 3500, "inventory": 3000, "currentLiabilities": 6000, "totalLiabilities": 14000, "totalDebt": 8000, "equity": 14000, "retainedEarnings": 6000, "marketValueEquity": 20000},
+      "current": {"revenue": 15400, "cogs": 9800, "ebit": 1900, "netIncome": 1500, "depreciation": 350, "sga": 3600, "interestExpense": 300, "operatingCashFlow": 700, "totalAssets": 34000, "currentAssets": 11000, "ppe": 6000, "receivables": 5000, "inventory": 3600, "currentLiabilities": 7000, "totalLiabilities": 17000, "totalDebt": 10000, "equity": 17000, "retainedEarnings": 7500, "marketValueEquity": 24000}
+    },
+    {
+      "company": "Apple", "sector": "technology", "label": "clean", "year": "2019",
+      "note": "Exceptional margins and cash; a legitimate statistical outlier.",
+      "prior":   {"revenue": 265595, "cogs": 163756, "ebit": 70898, "netIncome": 59531, "depreciation": 10903, "sga": 30941, "interestExpense": 3240, "operatingCashFlow": 77434, "totalAssets": 365725, "currentAssets": 131339, "ppe": 41304, "receivables": 48995, "inventory": 3956, "currentLiabilities": 116866, "totalLiabilities": 258578, "totalDebt": 114483, "equity": 107147, "retainedEarnings": 70400, "marketValueEquity": 1100000},
+      "current": {"revenue": 260174, "cogs": 161782, "ebit": 63930, "netIncome": 55256, "depreciation": 12547, "sga": 34462, "interestExpense": 3576, "operatingCashFlow": 69391, "totalAssets": 338516, "currentAssets": 162819, "ppe": 37378, "receivables": 45804, "inventory": 4106, "currentLiabilities": 105718, "totalLiabilities": 248028, "totalDebt": 108047, "equity": 90488, "retainedEarnings": 45898, "marketValueEquity": 1300000}
+    },
+    {
+      "company": "Microsoft", "sector": "technology", "label": "clean", "year": "2019",
+      "note": "Clean, high-quality growth; cash flow exceeds earnings.",
+      "prior":   {"revenue": 110360, "cogs": 38353, "ebit": 35058, "netIncome": 16571, "depreciation": 10261, "sga": 22223, "interestExpense": 2733, "operatingCashFlow": 43884, "totalAssets": 258848, "currentAssets": 169662, "ppe": 29460, "receivables": 26481, "inventory": 2662, "currentLiabilities": 58488, "totalLiabilities": 176130, "totalDebt": 76240, "equity": 82718, "retainedEarnings": 13682, "marketValueEquity": 780000},
+      "current": {"revenue": 125843, "cogs": 42910, "ebit": 42959, "netIncome": 39240, "depreciation": 11682, "sga": 23098, "interestExpense": 2686, "operatingCashFlow": 52185, "totalAssets": 286556, "currentAssets": 175552, "ppe": 36477, "receivables": 29524, "inventory": 2063, "currentLiabilities": 69420, "totalLiabilities": 184226, "totalDebt": 72242, "equity": 102330, "retainedEarnings": 24150, "marketValueEquity": 1050000}
+    },
+    {
+      "company": "Walmart", "sector": "retail", "label": "clean", "year": "2019",
+      "note": "Thin margins, high turnover, stable — a clean grocer/retailer.",
+      "prior":   {"revenue": 500343, "cogs": 373396, "ebit": 20437, "netIncome": 9862, "depreciation": 10529, "sga": 106510, "interestExpense": 2330, "operatingCashFlow": 28337, "totalAssets": 204522, "currentAssets": 59664, "ppe": 114818, "receivables": 5614, "inventory": 43783, "currentLiabilities": 78521, "totalLiabilities": 123700, "totalDebt": 50203, "equity": 80822, "retainedEarnings": 85107, "marketValueEquity": 290000},
+      "current": {"revenue": 514405, "cogs": 385301, "ebit": 21957, "netIncome": 6670, "depreciation": 10678, "sga": 107147, "interestExpense": 2129, "operatingCashFlow": 27753, "totalAssets": 219295, "currentAssets": 61897, "ppe": 111395, "receivables": 6283, "inventory": 44269, "currentLiabilities": 77477, "totalLiabilities": 139661, "totalDebt": 61942, "equity": 79634, "retainedEarnings": 80785, "marketValueEquity": 280000}
+    },
+    {
+      "company": "Sainsbury's", "sector": "retail", "label": "clean", "year": "2019",
+      "note": "Clean UK grocer — matched peer to Tesco.",
+      "prior":   {"revenue": 28456, "cogs": 26574, "ebit": 518, "netIncome": 309, "depreciation": 550, "sga": 1000, "interestExpense": 130, "operatingCashFlow": 1276, "totalAssets": 22270, "currentAssets": 7857, "ppe": 9789, "receivables": 700, "inventory": 1810, "currentLiabilities": 10302, "totalLiabilities": 14803, "totalDebt": 2200, "equity": 7467, "retainedEarnings": 3000, "marketValueEquity": 5500},
+      "current": {"revenue": 29007, "cogs": 27000, "ebit": 601, "netIncome": 219, "depreciation": 570, "sga": 1050, "interestExpense": 140, "operatingCashFlow": 1147, "totalAssets": 22743, "currentAssets": 7550, "ppe": 9600, "receivables": 680, "inventory": 1929, "currentLiabilities": 10896, "totalLiabilities": 15300, "totalDebt": 2300, "equity": 7443, "retainedEarnings": 3100, "marketValueEquity": 5000}
+    },
+    {
+      "company": "Adyen", "sector": "technology", "label": "clean", "year": "2019",
+      "note": "Clean high-growth fintech — matched peer to Wirecard.",
+      "prior":   {"revenue": 349, "cogs": 60, "ebit": 178, "netIncome": 131, "depreciation": 8, "sga": 120, "interestExpense": 1, "operatingCashFlow": 150, "totalAssets": 2800, "currentAssets": 2600, "ppe": 40, "receivables": 400, "inventory": 0, "currentLiabilities": 2200, "totalLiabilities": 2250, "totalDebt": 0, "equity": 550, "retainedEarnings": 200, "marketValueEquity": 14000},
+      "current": {"revenue": 497, "cogs": 80, "ebit": 245, "netIncome": 180, "depreciation": 12, "sga": 170, "interestExpense": 1, "operatingCashFlow": 210, "totalAssets": 4200, "currentAssets": 3900, "ppe": 60, "receivables": 600, "inventory": 0, "currentLiabilities": 3400, "totalLiabilities": 3450, "totalDebt": 0, "equity": 750, "retainedEarnings": 380, "marketValueEquity": 21000}
+    },
+    {
+      "company": "Johnson & Johnson", "sector": "healthcare", "label": "clean", "year": "2019",
+      "note": "Clean, stable healthcare; cash flow exceeds earnings.",
+      "prior":   {"revenue": 81581, "cogs": 27091, "ebit": 20264, "netIncome": 15297, "depreciation": 6929, "sga": 22540, "interestExpense": 1005, "operatingCashFlow": 22201, "totalAssets": 152954, "currentAssets": 46033, "ppe": 17035, "receivables": 14098, "inventory": 8599, "currentLiabilities": 31230, "totalLiabilities": 93202, "totalDebt": 30675, "equity": 59752, "retainedEarnings": 106216, "marketValueEquity": 345000},
+      "current": {"revenue": 82059, "cogs": 27556, "ebit": 20291, "netIncome": 15119, "depreciation": 7009, "sga": 22178, "interestExpense": 318, "operatingCashFlow": 23416, "totalAssets": 157728, "currentAssets": 45274, "ppe": 17658, "receivables": 14481, "inventory": 9020, "currentLiabilities": 35964, "totalLiabilities": 98257, "totalDebt": 26494, "equity": 59471, "retainedEarnings": 110659, "marketValueEquity": 385000}
+    },
+    {
+      "company": "Balfour Beatty", "sector": "manufacturing", "label": "clean", "year": "2016",
+      "note": "Clean contractor recovering — matched peer to Carillion.",
+      "prior":   {"revenue": 8683, "cogs": 8300, "ebit": -180, "netIncome": -199, "depreciation": 60, "sga": 300, "interestExpense": 40, "operatingCashFlow": -200, "totalAssets": 5200, "currentAssets": 3000, "ppe": 300, "receivables": 1500, "inventory": 100, "currentLiabilities": 3200, "totalLiabilities": 4000, "totalDebt": 500, "equity": 1200, "retainedEarnings": 400, "marketValueEquity": 1700},
+      "current": {"revenue": 8481, "cogs": 8050, "ebit": 60, "netIncome": 8, "depreciation": 65, "sga": 320, "interestExpense": 35, "operatingCashFlow": 120, "totalAssets": 5100, "currentAssets": 2950, "ppe": 310, "receivables": 1450, "inventory": 95, "currentLiabilities": 3150, "totalLiabilities": 3900, "totalDebt": 450, "equity": 1200, "retainedEarnings": 410, "marketValueEquity": 1900}
+    }
+  ]
+}

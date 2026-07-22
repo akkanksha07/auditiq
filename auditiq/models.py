@@ -145,6 +145,7 @@ class Finding(BaseModel):
     icon: str = "•"
     why: str = ""                     # plain-English: what specifically tripped this screen
     innocent: list[str] = Field(default_factory=list)  # common benign explanations
+    tier: int = 3                     # 1 earnings-quality/distress · 2 disclosure · 3 peer-context
 
 
 class NewsArticle(BaseModel):
@@ -195,6 +196,22 @@ class ForensicReview(BaseModel):
     as_of: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
 
 
+class TieredAssessment(BaseModel):
+    """Headline that reflects forensic signal strength, not a raw flag count.
+
+    Tier 1 (earnings quality & distress) + Tier 2 (disclosures) drive the result;
+    Tier 3 (outlier-vs-peers) is context only and never inflates the headline.
+    """
+
+    level: RiskLevel = "low"          # from Tier 1 + Tier 2 only
+    substantive: int = 0              # Tier 1 + Tier 2 flag count (the headline number)
+    context: int = 0                  # Tier 3 count (shown separately, not a fraud signal)
+    t1: int = 0
+    t2: int = 0
+    t3: int = 0
+    top: list[str] = Field(default_factory=list)  # leading substantive flags
+
+
 # ─── Bundled per-year + full report ───────────────────────────────────────────
 class YearAnalysis(BaseModel):
     year: str
@@ -232,3 +249,65 @@ class AuditReport(BaseModel):
     summary: str = ""                 # AI narrative audit summary
     overall_risk: RiskLevel = "low"
     generated_at: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M"))
+
+
+# ─── Back-testing / validation ────────────────────────────────────────────────
+class ConfusionMatrix(BaseModel):
+    tp: int = 0
+    fp: int = 0
+    tn: int = 0
+    fn: int = 0
+
+    @property
+    def n(self) -> int:
+        return self.tp + self.fp + self.tn + self.fn
+
+    @property
+    def sensitivity(self) -> float:      # hit-rate / recall
+        d = self.tp + self.fn
+        return self.tp / d if d else 0.0
+
+    @property
+    def specificity(self) -> float:
+        d = self.tn + self.fp
+        return self.tn / d if d else 0.0
+
+    @property
+    def false_positive_rate(self) -> float:
+        d = self.fp + self.tn
+        return self.fp / d if d else 0.0
+
+    @property
+    def precision(self) -> float:
+        d = self.tp + self.fp
+        return self.tp / d if d else 0.0
+
+    @property
+    def accuracy(self) -> float:
+        return (self.tp + self.tn) / self.n if self.n else 0.0
+
+
+class BacktestRow(BaseModel):
+    company: str
+    sector: str
+    year: str = ""
+    is_manipulator: bool = False
+    m_score: Optional[float] = None
+    beneish_flag: bool = False
+    z_score: Optional[float] = None
+    altman_zone: Optional[str] = None
+    altman_flag: bool = False
+    tiered_flag: bool = False
+
+
+class BacktestScreen(BaseModel):
+    name: str
+    matrix: ConfusionMatrix
+
+
+class BacktestResult(BaseModel):
+    rows: list[BacktestRow] = Field(default_factory=list)
+    screens: list[BacktestScreen] = Field(default_factory=list)
+    n_manipulators: int = 0
+    n_clean: int = 0
+    caveats: list[str] = Field(default_factory=list)

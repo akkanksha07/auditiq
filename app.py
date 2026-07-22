@@ -35,6 +35,7 @@ del _aiq_models_check
 
 from auditiq.analysis.benford import EXPECTED, analyze as benford_analyze
 from auditiq.analysis.benchmark import industries
+from auditiq.analysis.scoring import assess_tiers
 from auditiq.config import ALTMAN_ZONES, settings
 from auditiq.intelligence.forensic import CATEGORY_LABEL, analyze_disclosures
 from auditiq.intelligence.news import get_news_sentiment
@@ -412,9 +413,15 @@ def sidebar() -> str:
         spacer(10)
         if st.button("Load sample data", use_container_width=True, type="primary"):
             st.session_state["report"] = load_sample()
+            st.session_state.pop("view", None)
             st.rerun()
         if st.session_state.get("report") and st.button("Clear", use_container_width=True):
             st.session_state.pop("report", None)
+            st.session_state.pop("view", None)
+            st.rerun()
+        spacer(6)
+        if st.button("Validation · back-test", use_container_width=True):
+            st.session_state["view"] = "validation"
             st.rerun()
     return industry
 
@@ -564,24 +571,23 @@ def render_guide() -> None:
 
 # ─── Dashboard ────────────────────────────────────────────────────────────────
 def _verdict_card(report: AuditReport, year: YearAnalysis) -> str:
-    risk = report.overall_risk
-    quant = [f for f in year.findings if f.category != "clear"]
     disc = report.forensic.flags if report.forensic else []
-    total = len(quant) + len(disc)
-    color = RISK_COLOR[risk] if total else GREEN
-    headline = (f"{total} red flag{'s' if total != 1 else ''} to investigate"
-                if total else "No red flags raised")
+    ta = assess_tiers(year.findings, disc)
+    color = RISK_COLOR[ta.level] if ta.substantive else GREEN
+    headline = (f"{ta.substantive} substantive red flag{'s' if ta.substantive != 1 else ''}"
+                if ta.substantive else "No substantive red flags")
     summary = (report.summary or "").strip()
     if not summary:
-        tops = [f.title for f in quant if f.level == "high"][:2] or [f.title for f in quant][:2]
-        lead = "; ".join(tops)
-        summary = (f"The quantitative screens raised {len(quant)} flag{'s' if len(quant) != 1 else ''} "
-                   f"and the disclosure review {len(disc)} for {year.year}. Start with: {lead}."
-                   if lead else f"No screening thresholds were breached for {year.year}.")
-    return (f'<div class="aiq-verdict"><div class="eb">Screening result</div>'
+        lead = "; ".join(ta.top)
+        ctx = (f" {ta.context} peer-context observation{'s' if ta.context != 1 else ''} are shown "
+               f"separately and are not treated as fraud signals." if ta.context else "")
+        summary = (f"Weighted by forensic signal strength: {ta.t1} earnings-quality/distress and "
+                   f"{ta.t2} disclosure flag{'s' if ta.t2 != 1 else ''} for {year.year}."
+                   + (f" Start with: {lead}." if lead else "") + ctx)
+    return (f'<div class="aiq-verdict"><div class="eb">Screening result · weighted by signal strength</div>'
             f'<div class="risk" style="color:{color}">{headline}</div>'
             f'<div class="sum">{summary}</div>'
-            f'<div class="meta">{len(quant)} quantitative · {len(disc)} disclosure · '
+            f'<div class="meta">Tier 1 {ta.t1} · Tier 2 {ta.t2} · Tier 3 (context) {ta.t3} · '
             f'{report.industry.title()} · {", ".join(y.year for y in report.years)}</div></div>')
 
 
@@ -914,8 +920,111 @@ def results_view(report: AuditReport) -> None:
         render_guide()
 
 
+def _confusion_html(m) -> str:
+    def cell(cls, label, val, sub):
+        return (f'<div class="cm-cell {cls}"><div class="cm-l">{label}</div>'
+                f'<div class="cm-v aiq-num">{val}</div><div class="cm-s">{sub}</div></div>')
+    return ('<div class="aiq-cm">'
+            '<div></div><div class="cm-top">Screen: FLAG</div><div class="cm-top">Screen: clear</div>'
+            '<div class="cm-side">Actual:<br>manipulator</div>'
+            + cell("tp", "True positive", m.tp, "fraud caught")
+            + cell("fn", "False negative", m.fn, "fraud missed")
+            + '<div class="cm-side">Actual:<br>clean</div>'
+            + cell("fp", "False positive", m.fp, "clean flagged")
+            + cell("tn", "True negative", m.tn, "clean cleared")
+            + '</div>')
+
+
+def validation_view() -> None:
+    from auditiq.analysis.backtest import run_backtest
+    import pandas as pd
+
+    st.markdown(
+        """<style>
+          .aiq-cm { display:grid; grid-template-columns:auto 1fr 1fr; gap:8px; align-items:stretch; }
+          .aiq-cm .cm-top { font-size:10.5px; font-weight:700; color:#667085; text-transform:uppercase;
+            letter-spacing:.05em; text-align:center; align-self:end; padding-bottom:5px; }
+          .aiq-cm .cm-side { font-size:10.5px; font-weight:700; color:#667085; align-self:center;
+            line-height:1.25; max-width:78px; }
+          .aiq-cm .cm-cell { border-radius:12px; padding:14px 10px; text-align:center; border:1px solid; }
+          .aiq-cm .cm-cell.tp { background:#ECFDF3; border-color:#ABEFC6; }
+          .aiq-cm .cm-cell.tn { background:#F0FDF9; border-color:#A7F3D0; }
+          .aiq-cm .cm-cell.fn { background:#FEF3F2; border-color:#FECDCA; }
+          .aiq-cm .cm-cell.fp { background:#FFFAEB; border-color:#FEDF89; }
+          .aiq-cm .cm-l { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:#667085; font-weight:700; }
+          .aiq-cm .cm-v { font-size:30px; font-weight:800; color:#0F172A; line-height:1.1; }
+          .aiq-cm .cm-s { font-size:11px; color:#8A90A0; }
+        </style>""", unsafe_allow_html=True)
+
+    if st.button("← Back to analysis"):
+        st.session_state.pop("view", None)
+        st.rerun()
+
+    res = run_backtest()
+    st.markdown('<div class="aiq-co">Validation — does it actually work?</div>'
+                '<div class="aiq-co-meta">Every screen run over known accounting scandals versus '
+                'matched clean peers.</div>', unsafe_allow_html=True)
+    st.markdown('<hr class="aiq-rule">', unsafe_allow_html=True)
+    callout("This is a screen, not a detector. Below is its <b>measured</b> hit-rate and "
+            "false-positive rate on a labelled set — the honest picture of what it catches and "
+            "misses, and why a clean outlier like Apple is <b>not</b> flagged while Enron is.", "info")
+    spacer(8)
+
+    tiered = next(s for s in res.screens if s.name.startswith("Tiered"))
+    m = tiered.matrix
+    left, right = st.columns([1, 1], gap="large")
+    with left:
+        section("Confusion matrix — tiered screen",
+                f"{res.n_manipulators} manipulators · {res.n_clean} clean peers")
+        st.markdown(_confusion_html(m), unsafe_allow_html=True)
+    with right:
+        section("Headline metrics")
+        c = st.columns(3)
+        c[0].markdown(_metric_sm("Hit-rate", f"{m.sensitivity*100:.0f}%",
+                                 "sensitivity · frauds caught", GREEN if m.sensitivity >= 0.5 else AMBER),
+                      unsafe_allow_html=True)
+        c[1].markdown(_metric_sm("False alarms", f"{m.false_positive_rate*100:.0f}%",
+                                 "false-positive rate", GREEN if m.false_positive_rate <= 0.15 else AMBER),
+                      unsafe_allow_html=True)
+        c[2].markdown(_metric_sm("Accuracy", f"{m.accuracy*100:.0f}%", "overall", ACCENT),
+                      unsafe_allow_html=True)
+        spacer(12)
+        st.markdown("**Per-screen performance**")
+        st.dataframe(pd.DataFrame([{
+            "Screen": s.name,
+            "Sensitivity": f"{s.matrix.sensitivity*100:.0f}%",
+            "FPR": f"{s.matrix.false_positive_rate*100:.0f}%",
+            "Accuracy": f"{s.matrix.accuracy*100:.0f}%",
+            "TP/FP/TN/FN": f"{s.matrix.tp}/{s.matrix.fp}/{s.matrix.tn}/{s.matrix.fn}",
+        } for s in res.screens]), use_container_width=True, hide_index=True)
+
+    spacer(16)
+    section("Case by case", "The tiered screen's call for every company.")
+
+    def _result(r):
+        if r.is_manipulator and r.tiered_flag:
+            return "caught"
+        if r.is_manipulator:
+            return "missed"
+        return "false alarm" if r.tiered_flag else "correct"
+
+    st.dataframe(pd.DataFrame([{
+        "Company": r.company, "Actual": "Manipulator" if r.is_manipulator else "Clean",
+        "Sector": r.sector.title(),
+        "M-Score": r.m_score, "Z-Score": r.z_score, "Altman": r.altman_zone or "—",
+        "Screen call": "FLAG" if r.tiered_flag else "clear", "Outcome": _result(r),
+    } for r in res.rows]), use_container_width=True, hide_index=True)
+
+    spacer(8)
+    for cav in res.caveats:
+        st.caption("— " + cav)
+
+
 def main() -> None:
     industry = sidebar()
+    if st.session_state.get("view") == "validation":
+        validation_view()
+        return
     report = st.session_state.get("report")
     if report is None:
         upload_view(industry)
